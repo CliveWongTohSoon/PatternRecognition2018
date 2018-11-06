@@ -66,15 +66,15 @@ def NNClassifier (w_training, training_label, m_eigvecs, mean_image, test_image)
 
 
 face_avg = compute_avg_face(train_image[:,])
-phi_face = train_image.T - face_avg
+phi_face = train_image - face_avg.reshape(2576,1)
 plot_face(face_avg)
 s_large = compute_cov_face(phi_face.T) 
 print(s_large.shape)
 s_small = compute_cov_face(phi_face) 
 print(s_small.shape)
 
-eigvals_large, eigvecs_large = np.linalg.eig(s_large) 
-eigvals_small, eigvecs_small = np.linalg.eig(s_small) 
+eigvals_large, eigvecs_large = np.linalg.eigh(s_large) 
+eigvals_small, eigvecs_small = np.linalg.eigh(s_small) 
 
 eigvals_large = np.sort(eigvals_large)
 
@@ -83,6 +83,45 @@ eigvals_small = np.sort(eigvals_small)
 print ("Number of non-zero eigenvalues for large cov matrix: %d" %np.count_nonzero(eigvals_large))
 print ("Number of non-zero eigenvalues for small cov matrix: %d" %np.count_nonzero(eigvals_small))
 
+eigvals = eigvals_small
+eigvecs = eigvecs_small
+plt.plot(eigvals.real)
+
+plt.xlabel('Number')
+plt.ylabel('Eigen Values')
+plt.xlim([-5, 200])
+plt.show()
+
+m_eigvecs = eigvecs[:, :100]
+a = phi_face.dot(m_eigvecs)
+
+x_n = face_avg + a.dot(m_eigvecs.T)
+plt.subplot(221), plot_face(x_n[0, :].T.real)
+
+plt.subplot(222), plot_face(train_image[:, 0])
+
+a_test = m_eigvecs.T.dot(test_image[:, 3])
+x_test = face_avg + a_test.dot(m_eigvecs.T)
+print(x_test.shape)
+
+plt.subplot(223), plot_face(x_test.T.real)
+plt.subplot(224), plot_face(test_image[:, 3])
+
+print(a_test.shape)
+plt.show()
+
+pred_label = list(map(lambda k: NNClassifier(a, train_label, m_eigvecs, face_avg, k), test_image.T))
+
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
 
 
+cm = confusion_matrix(test_label, pred_label)
+plt.matshow(cm, cmap = 'Blues')
+plt.colorbar()
+plt.ylabel('Actual')
+plt.xlabel('Predicted')
+plt.show()
 
+acc = accuracy_score(test_label, pred_label)
+print ("Accuracy: %s " % (acc*100))
