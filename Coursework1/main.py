@@ -10,14 +10,14 @@ sys.path.append('src/')
 
 from data import train_image, train_label, test_image, test_label
 from lda import calc_eig_lda
-from pca import calc_eig_pca
+from pca import calc_eig_pca_small
 from fld import calc_eig_fld
 from functions import calc_accuracy, compute_avg_face, compute_s_w, compute_s_b
 import numpy as np
 
 ################################## Calculate accuracy #############################################
 # PCA
-eigvals_pca, eigvecs_pca, eigvals_pca_small, eigvecs_pca_small = calc_eig_pca(train_image, train_label)
+eigvals_pca, eigvecs_pca = calc_eig_pca_small(train_image, train_label)
 
 ## Variables
 m = 200

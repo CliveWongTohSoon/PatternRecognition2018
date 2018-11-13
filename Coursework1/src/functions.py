@@ -28,16 +28,6 @@ def compute_avg_face(face_list, axis=1) -> np:
 
 def compute_cov_face(face_list, N):
     return np.dot(face_list, face_list.T) / N
-    
-def nn_classifier(w_training, training_label, m_eigvecs, mean_image, face_image):
-    # map test image onto eigenspace
-    # normalize
-    phi = face_image - mean_image
-    # project on the eigenspace and represent the projection as w
-    w = np.dot(m_eigvecs.T, phi)
-    # calculate the distance 
-    dist = np.linalg.norm(w_training - w, axis=1) 
-    return training_label[np.argmin(dist)]
 
 def compute_s_b(face, face_label, face_avg):
     df = pd.DataFrame(face.T, index=face_label)
@@ -69,3 +59,48 @@ def calc_accuracy(test_image, test_label, a, train_label, m_eigvecs, face_avg):
     plt.ylabel('Actual')
     plt.xlabel('Predicted')
     return f"Accuracy: {acc:.2f}"
+
+# Classifier
+def nn_classifier(w_training, training_label, m_eigvecs, mean_image, face_image):
+    # map test image onto eigenspace
+    # normalize
+    phi = face_image - mean_image
+    # project on the eigenspace and represent the projection as w
+    w = np.dot(m_eigvecs.T, phi)
+    # calculate the distance 
+    dist = np.linalg.norm(w_training - w, axis=1) 
+    return training_label[np.argmin(dist)]
+
+def alternative_method(training_image, train_label, face_image):
+    df = pd.DataFrame(training_image.T, index=train_label)    
+    grouped_mean = df.groupby(df.index).mean()
+    grouped = df.groupby(df.index)
+
+    min_e = float('inf')
+    min_label = df.index[0]
+    for key, tab in grouped:
+        # Compute Principle (eigen) subspace per class
+        phi = tab - grouped_mean.loc[key, :]
+
+        A = phi.values.T
+        
+        D, N = A.shape
+        S = np.dot(A.T, A) / N
+        eigvals, eigvecs = np.linalg.eig(S)
+        u_i = A.dot(eigvecs)
+        norm_u_i = np.linalg.norm(u_i, axis=0)
+        u_i = u_i / norm_u_i
+
+        # Classification
+        face_mean = grouped_mean.loc[key, :].values
+        
+        phi = face_image - face_mean
+        
+        w = np.dot(phi.T, u_i)
+        x_n = face_mean + np.dot(u_i, w)
+
+        e = np.linalg.norm(face_image - x_n)
+        if e < min_e:
+            min_label = key
+            min_e = e
+    return min_label
