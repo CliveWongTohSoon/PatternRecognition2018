@@ -43,28 +43,13 @@ print(acc_recons)
 eigvals_fld, eigvecs_fld = calc_eig_fld(train_image, train_label, k, m, N)
 
 ## Variables
-k_eigvecs_fld = eigvecs_fld[:, :50]
+k_eigvecs_fld = eigvecs_fld[:, :50] # 50 because 
 w_opt = np.dot(k_eigvecs_fld.T, k_eigvecs.T).T.real
 a_fld = np.dot(phi_face.T, w_opt)
 
 pred_label = produce_pred_label(a_fld, train_label, w_opt, face_avg, test_image)
 acc_fld = calc_accuracy(pred_label, test_label)
 print(acc_fld)
-
-# def calc_accuracy(test_image, test_label, a, train_label, m_eigvecs, face_avg):
-#     pred_label = list(map(lambda k: nn_classifier(a, train_label, m_eigvecs, face_avg, k), test_image.T))
-#     acc = accuracy_score(test_label, pred_label)
-#     cm = confusion_matrix(test_label, pred_label)
-#     plt.matshow(cm, cmap="Blues")
-#     plt.colorbar()
-#     plt.ylabel('Actual')
-#     plt.xlabel('Predicted')
-#     return f"Accuracy: {acc:.2f}"
-
-
-# w_opt = np.dot(m_eigvecs)
-
-# acc_fld = calc_accuracy(test_image, test_label, )
 
 ################################### Unstructured code ##############################################
 # #import libraries
