@@ -20,6 +20,7 @@ import numpy as np
 m, N = train_image.shape
 k = 200
 
+print(set(train_label))
 # PCA
 eigvals_pca, eigvecs_pca = calc_eig_pca_small(train_image, m, N)
 
