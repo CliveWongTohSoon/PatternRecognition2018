@@ -12,40 +12,45 @@ from data import train_image, train_label, test_image, test_label
 from lda import calc_eig_lda
 from pca import calc_eig_pca_small
 from fld import calc_eig_fld
-from functions import calc_accuracy, compute_avg_face, compute_s_w, compute_s_b
+from functions import compute_avg_face, compute_s_w, compute_s_b
+from prediction import calc_accuracy, produce_pred_label, produce_reconstruction_pred_label
 import numpy as np
 
 ################################## Calculate accuracy #############################################
+m, N = train_image.shape
+k = 200
+
+print(set(train_label))
 # PCA
-eigvals_pca, eigvecs_pca = calc_eig_pca_small(train_image, train_label)
+eigvals_pca, eigvecs_pca = calc_eig_pca_small(train_image, m, N)
 
 ## Variables
-m = 200
-m_eigvecs = eigvecs_pca[:, :m]
+k_eigvecs = eigvecs_pca[:, :k]
 face_avg = compute_avg_face(train_image)
-phi_face = train_image - face_avg.reshape(face_avg.shape[0], 1)
-a = np.dot(phi_face.T, m_eigvecs)
+phi_face = train_image - face_avg.reshape(m, 1)
+a = np.dot(phi_face.T, k_eigvecs)
 
 ## Calcualte accuracy of pca
-acc_pca = calc_accuracy(test_image, test_label, a, train_label, m_eigvecs, face_avg)
+pred_label = produce_pred_label(a, train_label, k_eigvecs, face_avg, test_image)
+acc_pca = calc_accuracy(pred_label, test_label)
 print(acc_pca)
 
-# FLD
-sw = compute_s_w(train_image, train_label, face_avg)
-sb = compute_s_b(train_image, train_label, face_avg)
+## Calcualte accuracy of pca using reconstruction method
+pred_label = produce_reconstruction_pred_label(train_image, train_label, test_image)
+acc_recons = calc_accuracy(pred_label, test_label)
+print(acc_recons)
 
-eigvals_fld, eigvecs_fld = calc_eig_fld(m_eigvecs, sw, sb)
+# FLD
+eigvals_fld, eigvecs_fld = calc_eig_fld(train_image, train_label, k, m, N)
 
 ## Variables
-m_eigvecs_fld = eigvecs_fld[:, :50]
-w_opt = np.dot(m_eigvecs_fld.T, m_eigvecs.T).T.real
+k_eigvecs_fld = eigvecs_fld[:, :50] # 50 because 
+w_opt = np.dot(k_eigvecs_fld.T, k_eigvecs.T).T.real
 a_fld = np.dot(phi_face.T, w_opt)
 
-acc_fld = calc_accuracy(test_image, test_label, a_fld, train_label, w_opt, face_avg)
+pred_label = produce_pred_label(a_fld, train_label, w_opt, face_avg, test_image)
+acc_fld = calc_accuracy(pred_label, test_label)
 print(acc_fld)
-# w_opt = np.dot(m_eigvecs)
-
-# acc_fld = calc_accuracy(test_image, test_label, )
 
 ################################### Unstructured code ##############################################
 # #import libraries

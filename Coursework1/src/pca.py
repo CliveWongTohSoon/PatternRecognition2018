@@ -1,7 +1,7 @@
 from functions import compute_avg_face, compute_cov_face
 import numpy as np
 
-def calc_eig_pca(train_image, train_label):
+def calc_eig_pca(train_image):
     face_avg = compute_avg_face(train_image)
     phi_face = train_image - face_avg.reshape(face_avg.shape[0], 1)
 
@@ -13,14 +13,15 @@ def calc_eig_pca(train_image, train_label):
     # eigvals_small, eigvecs_small = np.linalg.eig(s_small)
     return eigvals, eigvecs
 
-def calc_eig_pca_small(train_image, train_label):
+def calc_eig_pca_small(train_image, m, N):
     """
     Always return the smaller, normalised version of eigen vectors and eigen values
+    m: number of features
+    N: number of samples
     """
-    m, N = train_image.shape
     if N < m:
         face_avg = compute_avg_face(train_image)
-        phi_face = train_image - face_avg.reshape(face_avg.shape[0], 1)
+        phi_face = train_image - face_avg.reshape(m, 1)
         s = compute_cov_face(phi_face.T, N)
         
         eigvals, eigvecs = np.linalg.eig(s)
@@ -31,4 +32,4 @@ def calc_eig_pca_small(train_image, train_label):
         return eigvals, eigvecs
     # If there are more features than the number of samples
     else:
-        return calc_eig_pca(train_image, train_label)
+        return calc_eig_pca(train_image)

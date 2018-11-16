@@ -8,9 +8,11 @@ Created on Mon Nov 12 10:16:52 2018
 import numpy as np
 import scipy.io as sio
 from scipy import stats
-from functions import compute_s_w, compute_s_b, compute_avg_face, nn_classifier
+from functions import compute_s_w, compute_s_b, compute_avg_face
+from prediction import nn_classifier, calc_accuracy, produce_pred_label
 from fld import calc_eig_fld
 from pca import calc_eig_pca_small
+from data import train_test_split_by_n
 #import multiprocessing as mp
 #
 #pool = mp.Pool(processes = 8)
@@ -49,8 +51,8 @@ def commMachineRandDataXFeat (data, test_img, feature_list, N, m_lda):
     for k in data:
         train_image = k[:,:-1].T
         train_label = k[:,-1].T
-        eigvals_pca, eigvecs_pca = calc_eig_pca_small(train_image, train_label)
-        
+        m, N = train_image.shape
+        eigvals_pca, eigvecs_pca = calc_eig_pca_small(train_image, m,N)   
         face_avg = compute_avg_face(train_image)
         phi_face = train_image - face_avg.reshape(face_avg.shape[0], 1)
     
@@ -62,7 +64,7 @@ def commMachineRandDataXFeat (data, test_img, feature_list, N, m_lda):
 
             m_eigvecs = eigvecs_pca[:, l]
             
-            eigvals_fld, eigvecs_fld = calc_eig_fld(m_eigvecs, sw, sb)
+            eigvals_fld, eigvecs_fld, m_eigvecs = calc_eig_fld(k_eigvecs=m_eigvecs, sw=sw, sb=sb)
             
             ## Variables
             m_eigvecs_fld = eigvecs_fld[:, :m_lda]
@@ -79,21 +81,22 @@ def commMachineRandDataXFeat (data, test_img, feature_list, N, m_lda):
 def commMachineRandDataAndFeat (bagged_data, ori_data, test_img, feature_list, N, m_lda):
 
     pred = []
+
     for k in bagged_data:
         train_image = k[:,:-1].T
         train_label = k[:,-1].T
-        eigvals_pca, eigvecs_pca = calc_eig_pca_small(train_image, train_label)
-        
+#        eigvals_pca, eigvecs_pca = calc_eig_pca_small(train_image, m,N)
+#        
         face_avg = compute_avg_face(train_image)
         phi_face = train_image - face_avg.reshape(face_avg.shape[0], 1)
-    
-        # FLD
-        sw = compute_s_w(train_image, train_label, face_avg)
-        sb = compute_s_b(train_image, train_label, face_avg)
-        
-        m_eigvecs = eigvecs_pca[:, :250]
-        
-        eigvals_fld, eigvecs_fld = calc_eig_fld(m_eigvecs, sw, sb)
+#    
+#        # FLD
+#        sw = compute_s_w(train_image, train_label, face_avg)
+#        sb = compute_s_b(train_image, train_label, face_avg)
+#        
+#        m_eigvecs = eigvecs_pca[:, :250]
+#        
+        eigvals_fld, eigvecs_fld, m_eigvecs = calc_eig_fld(train_image, train_label, 250)
         
         ## Variables
         m_eigvecs_fld = eigvecs_fld[:, :m_lda]
@@ -105,7 +108,9 @@ def commMachineRandDataAndFeat (bagged_data, ori_data, test_img, feature_list, N
     
     train_image = ori_data[:,:-1].T
     train_label = ori_data[:,-1].T
-    eigvals_pca, eigvecs_pca = calc_eig_pca_small(train_image, train_label)
+    m, N = train_image.shape
+
+    eigvals_pca, eigvecs_pca = calc_eig_pca_small(train_image, m, N)
     
     face_avg = compute_avg_face(train_image)
     phi_face = train_image - face_avg.reshape(face_avg.shape[0], 1)
@@ -117,7 +122,7 @@ def commMachineRandDataAndFeat (bagged_data, ori_data, test_img, feature_list, N
     for l in feature_list:
         m_eigvecs = eigvecs_pca[:, l]
             
-        eigvals_fld, eigvecs_fld = calc_eig_fld(m_eigvecs, sw, sb)
+        eigvals_fld, eigvecs_fld, m_eigvecs = calc_eig_fld(k_eigvecs = m_eigvecs, sw=sw, sb=sb)
         
         ## Variables
         m_eigvecs_fld = eigvecs_fld[:, :m_lda]
@@ -131,73 +136,73 @@ def commMachineRandDataAndFeat (bagged_data, ori_data, test_img, feature_list, N
     result = stats.mode(result_mat, axis = 0)
     return result, result_mat
 
-from sklearn.model_selection import train_test_split
 
-
-X_train, X_test, y_train, y_test = train_test_split(image_data, data_label, test_size=0.2)
+X_train, X_test, y_train, y_test = train_test_split_by_n(10, image_data, data_label, test_size=0.2)
 
 train_image = X_train.T
 train_label = y_train.T
 test_image = X_test.T
 test_label = y_test.T
 
-
-rand_feature_list = randFeature(100, 150, train_label.size, 10) #t set of pixel index
-
-
+m, N = train_image.shape
+rand_feature_list = randFeature(100, 150, train_label.size, 10) 
 bagging_set = bagging(train_image.T, train_label.T, train_label.size, 10)
 ori_data = np.column_stack((train_image.T, train_label.T))
-
-resultDataXFeat = commMachineRandDataXFeat (bagging_set, test_image, rand_feature_list, train_label.size, 51)
-from sklearn.metrics import accuracy_score
-accDataXFeat = accuracy_score(test_label, resultDataXFeat[0].T)
-print(accDataXFeat)
-
-result_data_and_feat, mat_data_and_feat = commMachineRandDataAndFeat (bagging_set, ori_data, test_image, rand_feature_list, train_label.size, 51)
-acc_data_and_feat = accuracy_score(test_label, result_data_and_feat[0].T)
-print(acc_data_and_feat)
-avg_err_data_and_feat =  np.mean(list(map(lambda k: accuracy_score(test_label, k), mat_data_and_feat)))
-
-result_feat, mat_feat = commMachineRandDataAndFeat ([], ori_data, test_image, rand_feature_list, train_label.size, 51)
-acc_feat = accuracy_score(test_label, result_feat[0].T)
-print(acc_feat)
-avg_err_feat =  np.mean(list(map(lambda k: accuracy_score(test_label, k), mat_feat)))
-
-
-
-result_data, mat_data = commMachineRandDataAndFeat (bagging_set, ori_data, test_image, [], train_label.size, 51)
-acc_data = accuracy_score(test_label, result_data[0].T)
-print(acc_data)
-avg_err_data =  np.mean(list(map(lambda k: accuracy_score(test_label, k), mat_data)))
-
-def diffMCommMachine (m_list, train_label, train_image, test_label, rho):
-    pred=[]
-    ind_acc = []
-    bagging_set = bagging(train_image.T, train_label.T, train_label.size, 5)
-    
-    for dataset in bagging_set:
-        m_list_idx = range(len(m_list))
-        m_list_rand_idx = np.random.choice(m_list_idx, size = rho, replace = False)
-        m_list_rand = m_list[m_list_rand_idx]
-        for m in m_list_rand:
-            rand_feature_list = randFeature(m[0], m[1], train_label.size, 1) #t set of pixel index
-            result, mat = commMachineRandDataAndFeat ([], dataset, test_image, rand_feature_list, train_label.size, m[2])
-            pred.append(result[0])
-            model_acc = np.mean(list(map(lambda k: accuracy_score(test_label, k), mat)))
-            ind_acc.append(model_acc)
-            
-    result = stats.mode(pred, axis = 0)
-    avg_acc =  np.mean(ind_acc)
-    acc =  accuracy_score(test_label, result[0])
-    
-    
-    
-    return result, avg_acc,acc
-
-#m_list = [[100,50,51], [200,50,51]]#, [300,50,51], [350,50,51], [100,50,51], [100,100,51], 
-##          #[100,150,51], [100,200,51], [100,250,51],[100,150,10],[100,150,20],[100,150,30], [100,150,40], [100,150,50]]
-#m_list = np.array(m_list)
-#result, avg_acc, acc = diffMCommMachine(m_list, train_label, train_image, test_label,1)
+face_avg = compute_avg_face(train_image)
+phi_face = train_image - face_avg.reshape(m, 1)
 #
-##        
-##
+#result_dataXFeat, mat_dataXFeat = commMachineRandDataXFeat (bagging_set, test_image, rand_feature_list, train_label.size, 51)
+from sklearn.metrics import accuracy_score
+#accDataXFeat = calc_accuracy(test_label, result_dataXFeat[0].T)
+#avg_err_dataXFeat =  np.mean(list(map(lambda k: accuracy_score(test_label, k), mat_dataXFeat)))
+#
+#
+#result_data_and_feat, mat_data_and_feat = commMachineRandDataAndFeat (bagging_set, ori_data, test_image, rand_feature_list, train_label.size, 51)
+#acc_data_and_feat = calc_accuracy(test_label, result_data_and_feat[0].T)
+##print(acc_data_and_feat)
+#avg_err_data_and_feat =  np.mean(list(map(lambda k: accuracy_score(test_label, k), mat_data_and_feat)))
+#
+#result_feat, mat_feat = commMachineRandDataAndFeat ([], ori_data, test_image, rand_feature_list, train_label.size, 51)
+#acc_feat = calc_accuracy(test_label, result_feat[0].T)
+##print(acc_feat)
+#avg_err_feat =  np.mean(list(map(lambda k: accuracy_score(test_label, k), mat_feat)))
+#
+#
+#
+#result_data, mat_data = commMachineRandDataAndFeat (bagging_set, ori_data, test_image, [], train_label.size, 51)
+#acc_data = calc_accuracy(test_label, result_data[0].T)
+##print(acc_data)
+#avg_err_data =  np.mean(list(map(lambda k: accuracy_score(test_label, k), mat_data)))
+#
+#
+#m_list = [[100,50,51], [100,100,51],[100,150,51], [100,200,51], [100,250,51],[100,300,51]]
+#m_list = np.array(m_list)
+#
+#acc_diff_m1 = []
+#
+#for m in m_list:
+#    rand_feature_list = randFeature(m[0], m[1], train_label.size, 10) #t set of pixel index
+#    result, mat = commMachineRandDataAndFeat (bagging_set, ori_data, test_image, rand_feature_list, train_label.size, m[2])
+#    acc = calc_accuracy(test_label, result[0].T)
+#    acc_diff_m1.append(acc)
+#    
+
+mpca_list = [50,100,150,200,250,300,350,400]
+mlda_list=[5,10,15,20,25,30,35,40,45,50]
+acc_m=[]
+for mpca in mpca_list:
+    acc_mlda=[]
+    for mlda in mlda_list:
+        eigvals_fld, eigvecs_fld, k_eigvecs= calc_eig_fld(train_image, train_label, mpca)
+    
+        ## Variables
+        k_eigvecs_fld = eigvecs_fld[:, :mlda] # 50 because 
+        w_opt = np.dot(k_eigvecs_fld.T, k_eigvecs.T).T.real
+        a_fld = np.dot(phi_face.T, w_opt)
+        
+        pred_label = produce_pred_label(a_fld, train_label, w_opt, face_avg, test_image)
+        acc_fld = accuracy_score(pred_label, test_label)
+        print(acc_fld)
+        acc_mlda.append(acc_fld)
+    acc_m.append(acc_mlda)
+
