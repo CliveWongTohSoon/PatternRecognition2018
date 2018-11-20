@@ -6,25 +6,6 @@ from pca import calc_eig_pca_small
 from functions import compute_avg_face
 import matplotlib.pyplot as plt
 
-# def nn_classifier(training_image, train_label, k, face_image):
-#     # w_training, training_label, m_eigvecs, mean_image, face_image):
-#     # map test image onto eigenspace
-#     # normalize
-#     mean_image = compute_avg_face(training_image)
-#     m, N = training_image.shape
-#     eigvals, eigvecs = calc_eig_pca_small(training_image, m, N)
-#     k_eigvecs = eigvecs[:, :k]
-#     # Training
-#     phi_train = training_image - mean_image.reshape(m, 1)
-#     w_training = np.dot(k_eigvecs.T, phi_train)
-
-#     # project on the eigenspace and represent the projection as w
-#     phi_test = face_image - mean_image
-#     w = np.dot(k_eigvecs.T, phi_test)
-    
-#     # calculate the distance 
-#     dist = np.linalg.norm(w_training - w, axis=1) 
-#     return train_label[np.argmin(dist)]
 
 def nn_classifier(w_training, training_label, k_eigvecs, mean_image, face_image):
     # map test image onto eigenspace
