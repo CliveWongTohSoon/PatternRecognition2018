@@ -35,6 +35,9 @@
 ## siamese_test.py
 - Evaluate a model trained by Siamese network. Loads a model from 'model' directory and perform KNN and K-means evaluation. 
 
+## cmc_plot_all.py
+- Run this to plot the CMC curve for PCA, LDA, ITML and Siamese Network.
+
 # User Instruction
 1. Clone repository from this Github link: https://github.com/CliveWongTohSoon/PatternRecognition2018.git. The code is contained in the Coursework2 directory. 
 2. The following python packages are needed: ujson, sklearn, scipy, matplotlib, tensorflow, pandas, numpy and metric-learn. 
