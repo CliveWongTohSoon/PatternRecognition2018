@@ -1,2 +1,7 @@
 .vscode/
 __pycache__
+CW2/assets/*
+venv/
+.idea/
+Jupyter/assets/*
+Coursework2/assets/*
