@@ -6,6 +6,7 @@ import sklearn.utils.linear_assignment_ as la
 from sklearn.metrics import accuracy_score
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
 
 
 def get_acc(query_idxs, predicted_idxs, labels): 
@@ -36,6 +37,24 @@ def get_all_rank_acc(nn_idx_mat, query_idxs, labels):
     k10 = nn_idx_mat
 
     return get_acc(query_idxs, k1, labels), get_acc(query_idxs, k5, labels), get_acc(query_idxs, k10, labels)
+
+def plot_CMC(nn_idx_mat, query_idxs, labels):
+    acc = []
+    for k in range(1,11):
+        acc_rank = get_acc(query_idxs, nn_idx_mat[:,:k].reshape(nn_idx_mat.shape[0], k), labels)
+        print (acc_rank)
+        acc.append(acc_rank)
+    x = list(range(1,11))
+    y = acc
+    plt.figure(figsize=(8, 6))
+    # ax = plt.subplot(111)
+    # clean the figure
+    plt.clf()
+    plt.xlabel('Rank')
+    plt.ylabel('Accuracy')
+    plt.plot(x,y)
+    plt.show()
+    return acc
 
 def evaluation(func, features, gallery_idxs, query_idxs, camId, labels, metric='euclidean', metric_params=None, k=10, n_pool=8):
 

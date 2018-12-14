@@ -69,7 +69,7 @@ def main():
     X_itmls = []
     all_rank_acc_g = []
     for g in gamma:
-        itml = ITML_Supervised(verbose=True, num_constraints=5000, gamma=g)
+        itml = ITML_Supervised(verbose=True, num_constraints=5000, gamma=0.2)
         X = m_features[train_idxs]
         X_itml = itml.fit_transform(X, Y)
         X_itmls.append(X_itml)
