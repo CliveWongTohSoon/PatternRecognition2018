@@ -36,7 +36,9 @@
 - Evaluate a model trained by Siamese network. Loads a model from 'model' directory and perform KNN and K-means evaluation. 
 
 # User Instruction
-1. Download CW2_data.zip and extract contents into 'assets'.
-2. Run baseline.py, pca.py, lda.py or itml.py to train and evaluate metric-learning methods of interest.
-3. Run siamese_train.py to train neural network. Models will be saved in 'model' and can be used for evaluation. The default save period is 200.
-4. Run siamese_test.py to test neural network. Open the file and change the variable 'test_model' to evaluate that particular model. The folder contains some trained models that can be used for testing.
+1. Clone repository from this Github link: https://github.com/CliveWongTohSoon/PatternRecognition2018.git. The code is contained in the Coursework2 directory. 
+2. The following python packages are needed: ujson, sklearn, scipy, matplotlib, tensorflow, pandas, numpy and metric-learn. 
+3. Download provided dataset CW2\_data.zip and extract contents into a directory 'assets'. The assets directory should be in the Coursework2 directory.  
+4. Run baseline.py, pca.py, lda.py or itml.py to train and evaluate metric-learning methods of interest.
+5. Run siamese\_train.py to train neural network. Models will be saved in 'model' and can be used for evaluation. The default save period is 200.
+6. Run siamese\_test.py to test neural network. Open the file and change the variable 'test\_model' to evaluate that particular model. The folder contains some trained models that can be used for testing.
